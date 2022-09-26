@@ -192,7 +192,7 @@
 									"    pm.environment.set(\"STRONGER_THAN\", pm.environment.get(\"STRONGER_THAN\") + \", \" + response.loser)\r",
 									"}\r",
 									"if(response.loser == pm.variables.get(\"CREATED_HERO_NAME\")){\r",
-									"     pm.environment.set(\"WEEKER_THAN\", pm.environment.get(\"WEEKER_THAN\") + \", \" + response.winner)\r",
+									"     pm.environment.set(\"WEAKER_THAN\", pm.environment.get(\"WEAKER_THAN\") + \", \" + response.winner)\r",
 									"}\r",
 									"\r",
 									"pm.test(\"POST HERO BATTLE Successful Request\", function () {\r",
