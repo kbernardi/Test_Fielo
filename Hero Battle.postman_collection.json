@@ -1,0 +1,543 @@
+{
+	"info": {
+		"_postman_id": "101d4ab5-eb52-42b8-b833-3f44d122c14f",
+		"name": "Hero Battle",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7998955"
+	},
+	"item": [
+		{
+			"name": "Heroes",
+			"item": [
+				{
+					"name": "Getting Heroes",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"const herosId = response.map((heros) => heros.id)\r",
+									"//retreave all heros_ids\r",
+									"pm.environment.set(\"HEROES_IDS\", herosId) \r",
+									"pm.test(\"get HEROES with valid response\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    pm.response.to.be.json;\r",
+									"    pm.response.to.be.withBody;\r",
+									"    tv4.validate(response, pm.variables.get(\"HEROS_SCHEMA\"));\r",
+									"});\r",
+									"\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "{{TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/{{HEROES}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"{{HEROES}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create hero",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.variables.set(\"POWER\",_.random(pm.variables.get(\"MIN_SKILL_VALUE\"),pm.variables.get(\"MAX_SKILL_VALUE\")));\r",
+									"pm.variables.set(\"VELOCITY\",_.random(pm.variables.get(\"MIN_SKILL_VALUE\"),pm.variables.get(\"MAX_SKILL_VALUE\")));\r",
+									"pm.variables.set(\"COMBATE\",_.random(pm.variables.get(\"MIN_SKILL_VALUE\"),pm.variables.get(\"MAX_SKILL_VALUE\")));\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"pm.environment.set(\"CREATED_HERO_ID\", response.id)\r",
+									"pm.environment.set(\"CREATED_HERO_NAME\", response.name)\r",
+									"\r",
+									"pm.test(\"POST HERO Successful Request\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    pm.response.to.be.json;\r",
+									"    tv4.validate(response, pm.variables.get(\"HEROS_SCHEMA\"));\r",
+									"});\r",
+									"\r",
+									"//check authenticated error\r",
+									"pm.sendRequest({\r",
+									"                url: pm.variables.get(\"BASE_URL\") +'/' + pm.variables.get(\"HEROES\"),\r",
+									"                method: 'POST',\r",
+									"                header: 'x-access-token:\"invalid\"',\r",
+									"                body: {\r",
+									"                        mode: 'raw',\r",
+									"                        raw: JSON.stringify({ name: 'test', skill:{power:1,velocity:2,combat:3} })\r",
+									"                    }\r",
+									"                }, function (err, res) {\r",
+									"                    if (err) {\r",
+									"                            console.log(error);\r",
+									"                    }\r",
+									"                   else{\r",
+									"                       pm.test(\"Must return error if not authenticated\", () => {\r",
+									"                            pm.expect(res).to.have.property('code', 401);\r",
+									"                        });\r",
+									"                   }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "{{TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n   \"name\":\"{{$randomFullName}}\",\r\n   \"skills\": {\r\n            \"power\":{{POWER}},\r\n            \"velocity\": {{VELOCITY}},\r\n            \"combat\": {{COMBATE}}\r\n        }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/{{HEROES}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"{{HEROES}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Battle",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const existingHeros = pm.environment.get(\"HEROES_IDS\")\r",
+									"pm.environment.set(\"HERO_EXISTING\",existingHeros.shift())\r",
+									"if(existingHeros.length > 0){\r",
+									"    postman.setNextRequest('Battle')\r",
+									"}else{\r",
+									"    postman.setNextRequest(null)\r",
+									"}\r",
+									"\r",
+									"pm.environment.set(\"HEROES_IDS\",existingHeros)"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"if(response.winner == pm.variables.get(\"CREATED_HERO_NAME\")){\r",
+									"    pm.environment.set(\"STRONGER_THAN\", pm.environment.get(\"STRONGER_THAN\") + \", \" + response.loser)\r",
+									"}\r",
+									"if(response.loser == pm.variables.get(\"CREATED_HERO_NAME\")){\r",
+									"     pm.environment.set(\"WEEKER_THAN\", pm.environment.get(\"WEEKER_THAN\") + \", \" + response.winner)\r",
+									"}\r",
+									"\r",
+									"pm.test(\"POST HERO BATTLE Successful Request\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    pm.response.to.be.json;\r",
+									"});\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-access-token",
+								"value": "{{TOKEN}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"hero_id\":[\"{{CREATED_HERO_ID}}\"],\r\n    \"machine_hero_id\":[\"{{HERO_EXISTING}}\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/{{BATTLE}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"{{BATTLE}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "Auth",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"AUTH valid response\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"    pm.response.to.be.json;\r",
+									"    pm.response.to.be.withBody;\r",
+									"    pm.expect(response.auth).to.be.a('boolean');\r",
+									"    pm.expect(response.token).to.be.a('string');\r",
+									"    pm.expect(response.auth).to.eql(true);\r",
+									"    pm.expect(response.token.length).to.be.greaterThan(0);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//set enviroment variable token\r",
+									"pm.environment.set(\"TOKEN\", response.token)\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"                url: pm.variables.get(\"BASE_URL\") +'/' + pm.variables.get(\"AUTH\"),\r",
+									"                method: 'POST',\r",
+									"                header: 'x-app-id:MPDIGfMA0GCSqGSIbi232QKBgQCh7uxHjWd1CyRgPKiDb3DQEBAQ',\r",
+									"                }, function (err, res) {\r",
+									"                    if (err) {\r",
+									"                            console.log(error);\r",
+									"                    }\r",
+									"                    pm.test(\"AUTH Must refuse request with invalid x-app-id\", () => {\r",
+									"                        pm.expect(res).to.have.status(500);;\r",
+									"                        });\r",
+									"});\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"                url: pm.variables.get(\"BASE_URL\") +'/' + pm.variables.get(\"AUTH\"),\r",
+									"                method: 'POST',\r",
+									"                }, function (err, res) {\r",
+									"                    if (err) {\r",
+									"                            console.log(error);\r",
+									"                    }\r",
+									"                    pm.test(\"AUTH Must refuse request without x-app-id\", () => {\r",
+									"                        pm.expect(res).to.have.status(500);;\r",
+									"                        });\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "{{AUTH_X_APP_ID}}",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "x-app-id",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BASE_URL}}/{{AUTH}}",
+							"host": [
+								"{{BASE_URL}}"
+							],
+							"path": [
+								"{{AUTH}}"
+							]
+						},
+						"description": "Validating a successful auth request"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"utils = {",
+					"    getRandomSkillValue: function () {",
+					"        return  _.random(pm.variables.get(\"MIN_SKILL_VALUE\"),pm.variables.get(\"MAX_SKILL_VALUE\"));",
+					"    },",
+					"",
+					"    /**",
+					"     * Generates a valid hero based on what's passed as an argument",
+					"     */",
+					"    getHero: function ({ name, skills: { power, velocity, combat } } = { skills: {} }) {",
+					"        return {",
+					"            \"name\": name || pm.variables.replaceIn(\"{{$randomFullName}}\"),",
+					"            \"skills\": {",
+					"                \"power\": power || this.getRandomSkillValue(),",
+					"                \"velocity\": velocity || this.getRandomSkillValue(),",
+					"                \"combat\": combat || this.getRandomSkillValue(),",
+					"            }",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Generates a `create hero` request based on a url, token and a raw body content",
+					"     * (The URL and token may change according the environment)",
+					"     */",
+					"    createHeroRequest: function (createHeroUrl, token, bodyContent = this.getHero()) {",
+					"        return {",
+					"            url: createHeroUrl,",
+					"            method: 'POST',",
+					"            header: {",
+					"                'Content-Type': 'application/json',",
+					"                'x-access-token': token",
+					"            },",
+					"            body: {",
+					"                mode: 'raw',",
+					"                raw: JSON.stringify(bodyContent)",
+					"            }",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Creates a 'get hero' request based on a url and token",
+					"     * (The URL and token may change according the environment)",
+					"     * ",
+					"     */",
+					"    getHeroesRequest: function (getHeroesUrl, token) {",
+					"        return {",
+					"            url: getHeroesUrl,",
+					"            method: 'GET',",
+					"            header: {",
+					"                'Content-Type': 'application/json',",
+					"                'x-access-token': token",
+					"            },",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Create a battle request body based on a hero_id and a machine_hero_id",
+					"     */",
+					"    createBattleRequestBody: function (hero_id, machine_hero_id) {",
+					"        return JSON.stringify({",
+					"            \"hero_id\": hero_id,",
+					"            \"machine_hero_id\": machine_hero_id",
+					"        });",
+					"    },",
+					"",
+					"    /**",
+					"     * Get the hero array schema",
+					"     */",
+					"    getHeroArraySchema: function () {",
+					"        return {",
+					"            \"type\": \"array\",",
+					"            \"items\": [{",
+					"                \"type\": \"object\",",
+					"                \"properties\": {",
+					"                    \"id\": { \"type\": \"string\" },",
+					"                    \"name\": { \"type\": \"string\" },",
+					"                    \"skills\": {",
+					"                        \"type\": \"object\",",
+					"                        \"properties\": {",
+					"                            \"power\": { \"type\": \"integer\" },",
+					"                            \"velocity\": { \"type\": \"integer\" },",
+					"                            \"combat\": { \"type\": \"integer\" }",
+					"                        },",
+					"                        \"required\": [\"power\", \"velocity\", \"combat\"]",
+					"                    },",
+					"                },",
+					"                \"required\": [\"id\", \"name\", \"skills\"]",
+					"            }]",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Get failed requests error message schema",
+					"     */",
+					"    getErrorResponseSchema: function () {",
+					"        return {",
+					"            \"type\": \"object\",",
+					"            \"properties\": {",
+					"                \"message\": { \"type\": \"string\" },",
+					"            },",
+					"            \"required\": [\"message\"]",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Get failed requests error message schema",
+					"     */",
+					"    getBattleResponseSchema: function () {",
+					"        return {",
+					"            \"type\": \"object\",",
+					"            \"properties\": {",
+					"                \"winner\": { \"type\": \"string\" },",
+					"                \"loser\": { \"type\": \"string\" }",
+					"            },",
+					"            \"required\": [\"winner\", \"loser\"]",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Get tie battle results schema",
+					"     */",
+					"    getTieResultSchema: function () {",
+					"        return {",
+					"            \"type\": \"object\",",
+					"            \"properties\": {",
+					"                \"message\": { \"type\": \"string\" },",
+					"            },",
+					"            \"required\": [\"message\"]",
+					"",
+					"        }",
+					"    },",
+					"",
+					"    /**",
+					"     * Check if a content matches the hero schema",
+					"     */",
+					"    matchesHeroArraySchema: function (content) {",
+					"        return tv4.validate(content, this.getHeroArraySchema());",
+					"    },",
+					"};"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "AUTH",
+			"value": "auth",
+			"type": "string"
+		},
+		{
+			"key": "HEROES",
+			"value": "heroes",
+			"type": "string"
+		},
+		{
+			"key": "BATTLE",
+			"value": "heroes/battle",
+			"type": "string"
+		},
+		{
+			"key": "MAX_SKILL_VALUE",
+			"value": "200",
+			"type": "string"
+		},
+		{
+			"key": "MIN_SKILL_VALUE",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "HEROS_SCHEMA",
+			"value": "{\n            \"type\": \"object\",\n            \"properties\": {\n                \"id\": { \"type\": \"string\" },\n                \"name\": { \"type\": \"string\" },\n                \"skills\": {\n                    \"type\": \"object\",\n                    \"properties\": {\n                        \"power\": { \"type\": \"integer\" },\n                        \"velocity\": { \"type\": \"integer\" },\n                        \"combat\": { \"type\": \"integer\" }\n                    },\n                    \"required\": [\"power\", \"velocity\", \"combat\"]\n                },\n            },\n            \"required\": [\"id\", \"name\", \"skills\"]\n        }",
+			"type": "default"
+		}
+	]
+}

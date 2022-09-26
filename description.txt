@@ -1,0 +1,16 @@
+The base of test case is: check response and scheam.
+Auth:  AUTH Must refuse request without x-app-id
+       AUTH Must refuse request with invalid x-app-id
+       AUTH valid response
+getHeros:
+       get HEROES with valid response
+CreateHeros:
+       POST HERO Successful Request
+       Must return error if not authenticated
+battleHeros:
+       POST HERO BATTLE Successful Request
+
+The way of finding a weeker and strong Heros was interating the Battle endpoint and saving result in enviroment.
+
+I noticed that if you send anything that the api is not expeting it return 500 not 400 bad request. 
+
